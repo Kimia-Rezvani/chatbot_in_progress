@@ -1,0 +1,104 @@
+# importing the required modules
+import logging
+logging.basicConfig(level=logging.INFO)
+from chatterbot.trainers import ListTrainer
+from chatterbot.trainers import ChatterBotCorpusTrainer
+from chatterbot import ChatBot
+from chatterbot.conversation import Statement
+
+# creating a chatbot
+myBot = ChatBot(
+    name='Sakura',
+    read_only=False,
+    logic_adapters=[
+        'chatterbot.logic.MathematicalEvaluation',
+        'chatterbot.logic.BestMatch'
+    ]
+)
+
+# training the chatbot
+small_convo = [
+    'Hi there!',
+    'Hi',
+    'How do you do?',
+    'How are you?',
+    'I\'m cool.',
+    'Always cool.',
+    'I\'m Okay',
+    'Glad to hear that.',
+    'I\'m fine',
+    'I feel awesome',
+    'Excellent, glad to hear that.',
+    'Not so good',
+    'Sorry to hear that.',
+    'What\'s your name?',
+    ' I\'m Sakura. Ask me a math question, please.'
+]
+
+math_convo_1 = [
+    'Pythagorean theorem',
+    'a squared plus b squared equals c squared.'
+]
+
+math_convo_2 = [
+    'Law of Cosines',
+    'c**2 = a**2 + b**2 - 2*a*b*cos(gamma)'
+]
+
+# using the ListTrainer class
+list_trainee = ListTrainer(myBot)
+for i in (small_convo, math_convo_1, math_convo_2):
+    list_trainee.train(i)
+
+# using the ChatterBotCorpusTrainer class
+corpus_trainee = ChatterBotCorpusTrainer(myBot)
+corpus_trainee.train('chatterbot.corpus.english')
+
+
+print(myBot.get_response("Hi, there!"))
+print(myBot.get_response("What's your name?"))
+
+print(myBot.get_response("Do you know Pythagorean theorem"))
+print(myBot.get_response("Tell me the formula of law of cosines"))
+
+# Create a new instance of a ChatBot
+bot = ChatBot(
+    'Feedback Learning Bot',
+    storage_adapter='chatterbot.storage.SQLStorageAdapter'
+)
+
+def get_feedback():
+
+    text = input()
+
+    if 'yes' in text.lower():
+        return True
+    elif 'no' in text.lower():
+        return False
+    else:
+        print('Please type either "Yes" or "No"')
+        return get_feedback()
+
+print('Type something to begin...')
+
+# The following loop will execute each time the user enters input
+while True:
+    try:
+        input_statement = Statement(text=input())
+        response = bot.generate_response(
+            input_statement
+        )
+
+        print('\n Is "{}" a coherent response to "{}"? \n'.format(
+            response.text,
+            input_statement.text
+        ))
+        if get_feedback() is False:
+            print('please input the correct one')
+            correct_response = Statement(text=input())
+            bot.learn_response(correct_response, input_statement)
+            print('Responses added to bot!')
+
+    # Press ctrl-c or ctrl-d on the keyboard to exit
+    except (KeyboardInterrupt, EOFError, SystemExit):
+        break
